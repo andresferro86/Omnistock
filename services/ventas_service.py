@@ -9,6 +9,7 @@ Valida stock suficiente antes de vender.
 from decimal import Decimal
 from typing import List, Optional, Tuple
 
+
 from db.conexion import obtener_conexion, cerrar_conexion
 from models.ventas import Venta, DetalleVenta
 from models.productos import Producto
@@ -45,10 +46,17 @@ class VentasService:
         return True, ""
 
     @staticmethod
-    def registrar_venta(lineas: List[LineaVenta], cliente: str = "", observaciones: str = "") -> Tuple[bool, str]:
+    def registrar_venta(
+        lineas: List[LineaVenta],
+        id_cliente: Optional[int] = None,
+        cliente: str = "",
+        observaciones: str = "",
+    ) -> Tuple[bool, str]:
         """
         Registra una venta: inserta cabecera, detalles y descuenta stock.
         lineas: [(id_producto, cantidad, precio_unitario), ...]
+        id_cliente: opcional, si se selecciona cliente del catálogo.
+        cliente: nombre para mostrar (del catálogo o texto libre).
         Returns:
             (exito, mensaje)
         """
@@ -65,8 +73,8 @@ class VentasService:
             conn.autocommit = False  # Transacción explícita: todo o nada
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO ventas (total, cliente, observaciones) VALUES (%s, %s, %s)",
-                (float(total), (cliente or "").strip() or None, (observaciones or "").strip() or None),
+                "INSERT INTO ventas (total, id_cliente, cliente, observaciones) VALUES (%s, %s, %s, %s)",
+                (float(total), id_cliente, (cliente or "").strip() or None, (observaciones or "").strip() or None),
             )
             id_venta = cursor.lastrowid
             for id_producto, cantidad, precio_unitario in lineas:

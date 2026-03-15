@@ -14,10 +14,11 @@ from utils.helpers import validar_decimal_positivo, validar_entero_positivo, for
 
 
 class ProductosView(ttk.Frame):
-    """Frame con listado de productos, búsqueda y formulario CRUD."""
+    """Frame con listado de productos, búsqueda y formulario CRUD (o solo consulta si solo_lectura=True)."""
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, solo_lectura=False, **kwargs):
         super().__init__(parent, **kwargs)
+        self.solo_lectura = solo_lectura  # True = solo ver stock (rol Empleado/Vendedor)
         self._construir_ui()
 
     def _construir_ui(self):
@@ -55,33 +56,33 @@ class ProductosView(ttk.Frame):
         self.tree.configure(yscrollcommand=scroll.set)
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.tree.bind("<<TreeviewSelect>>", lambda e: self._al_seleccionar())
+        self.tree.bind("<<TreeviewSelect>>", lambda e: self._al_seleccionar() if not self.solo_lectura else None)
 
-        # --- Panel "Datos del producto" (derecha) ---
-        f_form = ttk.LabelFrame(f_contenido, text="Datos del producto", padding=10)
-        f_form.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
-
-        grid_f = ttk.Frame(f_form)
-        grid_f.pack(fill=tk.X)
-        ttk.Label(grid_f, text="Nombre:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=3)
+        # --- Panel "Datos del producto" (solo si no es solo lectura) ---
+        self.f_form = None
         self.var_nombre = tk.StringVar()
-        ttk.Entry(grid_f, textvariable=self.var_nombre, width=28).grid(row=0, column=1, padx=5, pady=3)
-        ttk.Label(grid_f, text="Descripción:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=3)
         self.var_descripcion = tk.StringVar()
-        ttk.Entry(grid_f, textvariable=self.var_descripcion, width=28).grid(row=1, column=1, padx=5, pady=3)
-        ttk.Label(grid_f, text="Precio:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=3)
         self.var_precio = tk.StringVar()
-        ttk.Entry(grid_f, textvariable=self.var_precio, width=12).grid(row=2, column=1, sticky=tk.W, padx=5, pady=3)
-        ttk.Label(grid_f, text="Stock:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=3)
         self.var_stock = tk.StringVar()
-        ttk.Entry(grid_f, textvariable=self.var_stock, width=12).grid(row=3, column=1, sticky=tk.W, padx=5, pady=3)
-
-        f_btn = ttk.Frame(f_form)
-        f_btn.pack(fill=tk.X, pady=10)
-        ttk.Button(f_btn, text="Nuevo", command=self._nuevo).pack(side=tk.LEFT, padx=3)
-        ttk.Button(f_btn, text="Guardar", command=self._guardar).pack(side=tk.LEFT, padx=3)
-        ttk.Button(f_btn, text="Actualizar", command=self._actualizar).pack(side=tk.LEFT, padx=3)
-        ttk.Button(f_btn, text="Eliminar", command=self._eliminar).pack(side=tk.LEFT, padx=3)
+        if not self.solo_lectura:
+            f_form = ttk.LabelFrame(f_contenido, text="Datos del producto", padding=10)
+            f_form.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
+            grid_f = ttk.Frame(f_form)
+            grid_f.pack(fill=tk.X)
+            ttk.Label(grid_f, text="Nombre:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=3)
+            ttk.Entry(grid_f, textvariable=self.var_nombre, width=28).grid(row=0, column=1, padx=5, pady=3)
+            ttk.Label(grid_f, text="Descripción:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=3)
+            ttk.Entry(grid_f, textvariable=self.var_descripcion, width=28).grid(row=1, column=1, padx=5, pady=3)
+            ttk.Label(grid_f, text="Precio:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=3)
+            ttk.Entry(grid_f, textvariable=self.var_precio, width=12).grid(row=2, column=1, sticky=tk.W, padx=5, pady=3)
+            ttk.Label(grid_f, text="Stock:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=3)
+            ttk.Entry(grid_f, textvariable=self.var_stock, width=12).grid(row=3, column=1, sticky=tk.W, padx=5, pady=3)
+            f_btn = ttk.Frame(f_form)
+            f_btn.pack(fill=tk.X, pady=10)
+            ttk.Button(f_btn, text="Nuevo", command=self._nuevo).pack(side=tk.LEFT, padx=3)
+            ttk.Button(f_btn, text="Guardar", command=self._guardar).pack(side=tk.LEFT, padx=3)
+            ttk.Button(f_btn, text="Actualizar", command=self._actualizar).pack(side=tk.LEFT, padx=3)
+            ttk.Button(f_btn, text="Eliminar", command=self._eliminar).pack(side=tk.LEFT, padx=3)
 
         self.id_seleccionado = None
         self._refrescar_lista()
@@ -112,6 +113,8 @@ class ProductosView(ttk.Frame):
         self._refrescar_lista()
 
     def _al_seleccionar(self):
+        if self.solo_lectura:
+            return
         sel = self.tree.selection()
         if not sel:
             self.id_seleccionado = None
@@ -131,12 +134,15 @@ class ProductosView(ttk.Frame):
         self.var_descripcion.set("")
         self.var_precio.set("")
         self.var_stock.set("")
-        self.tree.selection_remove(self.tree.selection())
+        for s in self.tree.selection():
+            self.tree.selection_remove(s)
 
     def _nuevo(self):
         self._limpiar_formulario()
 
     def _guardar(self):
+        if self.solo_lectura:
+            return
         nombre = self.var_nombre.get().strip()
         ok_precio, precio, msg_p = validar_decimal_positivo(self.var_precio.get(), "El precio")
         ok_stock, stock, msg_s = validar_entero_positivo(self.var_stock.get(), "El stock")
@@ -160,6 +166,8 @@ class ProductosView(ttk.Frame):
             messagebox.showerror("Error", mensaje)
 
     def _actualizar(self):
+        if self.solo_lectura:
+            return
         if self.id_seleccionado is None:
             messagebox.showwarning("Aviso", "Seleccione un producto de la lista para actualizar.")
             return
@@ -186,6 +194,8 @@ class ProductosView(ttk.Frame):
             messagebox.showerror("Error", mensaje)
 
     def _eliminar(self):
+        if self.solo_lectura:
+            return
         if self.id_seleccionado is None:
             messagebox.showwarning("Aviso", "Seleccione un producto de la lista para eliminar.")
             return

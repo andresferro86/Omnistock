@@ -27,3 +27,6 @@ config_local.py
 *.swp
 .DS_Store
 Thumbs.db
+
+# Archivos temporales
+SQL Query.txt

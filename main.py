@@ -14,13 +14,18 @@ raiz = Path(__file__).resolve().parent
 if str(raiz) not in sys.path:
     sys.path.insert(0, str(raiz))
 
+from ui.login_view import LoginView
 from ui.main_window import MainWindow
 
 
 def main():
-    """Inicia la ventana principal y el bucle de la aplicación."""
-    app = MainWindow()
-    app.run()
+    """Muestra login; al validar, abre la ventana principal con el usuario."""
+    def on_login_ok(usuario):
+        app = MainWindow(usuario=usuario)
+        app.run()
+
+    login = LoginView(on_success=on_login_ok)
+    login.run()
 
 
 if __name__ == "__main__":

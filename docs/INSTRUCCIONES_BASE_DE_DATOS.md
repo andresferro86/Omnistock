@@ -6,8 +6,8 @@ Estas instrucciones permiten crear la base de datos **omnistock**, las tablas y 
 
 ## Requisitos previos
 
-- **MySQL** instalado y en ejecución (servidor local o remoto).
-- Usuario con permisos para crear bases de datos (por ejemplo `root` o un usuario con privilegios).
+- **MySQL** instalado y en ejecución (servidor local o remoto). En este proyecto se usa **Wampserver** (por ejemplo 3.4.0 - 64bit) con **MySQL 8.4.7** como motor por defecto. Asegúrese de que en la bandeja del sistema el icono de Wampserver muestre MySQL en verde (en ejecución); si no, use **Start All Services** o inicie el servicio MySQL.
+- Usuario con permisos para crear bases de datos (en Wampserver suele ser `root` con contraseña vacía o la que haya configurado en MySQL).
 
 ---
 
@@ -50,7 +50,7 @@ mysql -u tu_usuario -p < database\schema.sql
 & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p < database\schema.sql
 ```
 
-(Ajusta la ruta según tu instalación de MySQL.)
+(Ajusta la ruta según tu instalación. **Si usas Wampserver**, el ejecutable de MySQL suele estar en una ruta como `C:\wamp64\bin\mysql\mysql8.4.7\bin\mysql.exe` —cambia `mysql8.4.7` por la versión que tengas en tu carpeta `wamp64\bin\mysql\`.)
 
 ---
 

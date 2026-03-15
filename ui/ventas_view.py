@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from services.inventario_service import InventarioService
 from services.ventas_service import VentasService
+from services.clientes_service import ClientesService
 from utils.helpers import validar_entero_positivo, formatear_precio
 
 
@@ -22,9 +23,10 @@ LineaCarrito = tuple
 class VentasView(ttk.Frame):
     """Frame con formulario de nueva venta y listado de historial."""
 
-    def __init__(self, parent, on_venta_registrada=None, **kwargs):
+    def __init__(self, parent, on_venta_registrada=None, on_refrescar_clientes=None, **kwargs):
         super().__init__(parent, **kwargs)
-        self.on_venta_registrada = on_venta_registrada  # callback para refrescar Productos
+        self.on_venta_registrada = on_venta_registrada
+        self.on_refrescar_clientes = on_refrescar_clientes
         self.lineas_carrito = []  # List[Tuple[id_producto, nombre, cantidad, Decimal]]
         self._construir_ui()
 
@@ -58,12 +60,18 @@ class VentasView(ttk.Frame):
         self.tree_carrito.pack(fill=tk.X, pady=5)
         ttk.Button(f_venta, text="Quitar línea seleccionada", command=self._quitar_linea).pack(anchor=tk.W, pady=2)
 
-        # Cliente y total
+        # Cliente (catálogo o texto libre) y total
+        f_cli = ttk.Frame(f_venta)
+        f_cli.pack(fill=tk.X)
+        ttk.Label(f_cli, text="Cliente:").pack(side=tk.LEFT, padx=(0, 5))
+        self.var_cliente_combo = tk.StringVar()
+        self.combo_clientes = ttk.Combobox(f_cli, textvariable=self.var_cliente_combo, width=35, state="readonly")
+        self.combo_clientes.pack(side=tk.LEFT, padx=5)
+        ttk.Label(f_cli, text="  o nombre libre:").pack(side=tk.LEFT, padx=(10, 5))
+        self.var_cliente = tk.StringVar()
+        ttk.Entry(f_cli, textvariable=self.var_cliente, width=25).pack(side=tk.LEFT, padx=5)
         f_tot = ttk.Frame(f_venta)
         f_tot.pack(fill=tk.X)
-        ttk.Label(f_tot, text="Cliente (opcional):").pack(side=tk.LEFT, padx=(0, 5))
-        self.var_cliente = tk.StringVar()
-        ttk.Entry(f_tot, textvariable=self.var_cliente, width=30).pack(side=tk.LEFT, padx=5)
         self.lbl_total = ttk.Label(f_tot, text="Total: 0.00")
         self.lbl_total.pack(side=tk.RIGHT, padx=10)
         ttk.Button(f_venta, text="Registrar venta", command=self._registrar_venta).pack(pady=10)
@@ -116,8 +124,18 @@ class VentasView(ttk.Frame):
         ttk.Button(f_hist, text="Actualizar historial", command=self._refrescar_historial).pack(anchor=tk.W, pady=5)
 
         self.lista_ventas = []
+        self.lista_clientes = []
         self._cargar_combo_productos()
+        self._cargar_combo_clientes()
         self._refrescar_historial()
+
+    def _cargar_combo_clientes(self):
+        clientes = ClientesService.listar_todos()
+        self.lista_clientes = clientes
+        opciones = ["— Seleccionar cliente o escribir abajo —"] + [f"{c.id} - {c.nombre}" for c in clientes]
+        self.combo_clientes["values"] = opciones
+        self.combo_clientes.current(0)
+        self.var_cliente.set("")
 
     def _cargar_combo_productos(self):
         productos = InventarioService.listar_todos()
@@ -175,9 +193,17 @@ class VentasView(ttk.Frame):
             messagebox.showwarning("Aviso", "Agregue al menos un producto a la venta.")
             return
         lineas = [(id_p, cant, precio) for id_p, _, cant, precio in self.lineas_carrito]
+        idx_cli = self.combo_clientes.current()
+        id_cliente = None
+        cliente_texto = (self.var_cliente.get() or "").strip()
+        if idx_cli > 0 and idx_cli <= len(self.lista_clientes):
+            c = self.lista_clientes[idx_cli - 1]
+            id_cliente = c.id
+            cliente_texto = c.nombre
         exito, mensaje = VentasService.registrar_venta(
             lineas,
-            cliente=self.var_cliente.get(),
+            id_cliente=id_cliente,
+            cliente=cliente_texto or None,
             observaciones="",
         )
         if exito:
@@ -185,8 +211,11 @@ class VentasView(ttk.Frame):
             self._limpiar_carrito()
             self._refrescar_historial()
             self._cargar_combo_productos()
+            self._cargar_combo_clientes()
             if self.on_venta_registrada:
-                self.on_venta_registrada()  # Actualizar lista de productos (stock) en la pestaña Productos
+                self.on_venta_registrada()
+            if self.on_refrescar_clientes:
+                self.on_refrescar_clientes()
         else:
             messagebox.showerror("Error", mensaje)
 
@@ -195,6 +224,7 @@ class VentasView(ttk.Frame):
             self.tree_carrito.delete(item)
         self.lineas_carrito.clear()
         self._actualizar_total()
+        self.combo_clientes.current(0)
         self.var_cliente.set("")
 
     def _refrescar_historial(self):

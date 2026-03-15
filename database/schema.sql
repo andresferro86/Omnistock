@@ -29,6 +29,43 @@ CREATE TABLE IF NOT EXISTS productos (
 ) ENGINE=InnoDB;
 
 -- ============================================================
+-- Tabla: roles (para gestión de usuarios)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS roles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- Tabla: usuarios (autenticación y autorización)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario VARCHAR(80) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  id_rol INT NOT NULL,
+  nombre_completo VARCHAR(200) DEFAULT NULL,
+  activo TINYINT(1) NOT NULL DEFAULT 1,
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_usuario_rol FOREIGN KEY (id_rol) REFERENCES roles(id),
+  INDEX idx_usuario (usuario)
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- Tabla: clientes (catálogo de clientes)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS clientes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(200) NOT NULL,
+  documento VARCHAR(50) DEFAULT NULL,
+  telefono VARCHAR(50) DEFAULT NULL,
+  email VARCHAR(120) DEFAULT NULL,
+  direccion VARCHAR(300) DEFAULT NULL,
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_nombre (nombre)
+) ENGINE=InnoDB;
+
+-- ============================================================
 -- Tabla: ventas
 -- Cabecera de cada venta (fecha y total en pesos)
 -- ============================================================
@@ -36,9 +73,12 @@ CREATE TABLE IF NOT EXISTS ventas (
   id INT AUTO_INCREMENT PRIMARY KEY,
   fecha_venta DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   total DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total en pesos' CHECK (total >= 0),
-  cliente VARCHAR(200) DEFAULT NULL,
+  id_cliente INT DEFAULT NULL,
+  cliente VARCHAR(200) DEFAULT NULL COMMENT 'Nombre libre si no se selecciona cliente del catálogo',
   observaciones VARCHAR(500) DEFAULT NULL,
-  INDEX idx_fecha (fecha_venta)
+  CONSTRAINT fk_venta_cliente FOREIGN KEY (id_cliente) REFERENCES clientes(id),
+  INDEX idx_fecha (fecha_venta),
+  INDEX idx_id_cliente (id_cliente)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -72,9 +112,17 @@ INSERT INTO productos (nombre, descripcion, precio, stock) VALUES
 ('Resaltador amarillo', 'Marcador resaltador', 28.00, 70),
 ('Grapadora', 'Grapadora metálica', 85.00, 25);
 
+-- Roles (el usuario admin se crea al primer arranque con contraseña: admin)
+INSERT INTO roles (nombre) VALUES ('Administrador'), ('Vendedor');
+
+-- Clientes de prueba
+INSERT INTO clientes (nombre, documento, telefono, email) VALUES
+('Cliente prueba', 'CC 123456', '3001112233', 'cliente@ejemplo.com'),
+('María García', 'CC 654321', '3102223344', 'maria@ejemplo.com');
+
 -- Una venta de ejemplo con dos productos (importes en pesos)
-INSERT INTO ventas (fecha_venta, total, cliente, observaciones) VALUES
-(NOW(), 0.00, 'Cliente prueba', 'Venta de ejemplo');
+INSERT INTO ventas (fecha_venta, total, id_cliente, cliente, observaciones) VALUES
+(NOW(), 0.00, 1, 'Cliente prueba', 'Venta de ejemplo');
 
 SET @id_venta_ejemplo = LAST_INSERT_ID();
 

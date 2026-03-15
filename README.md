@@ -44,24 +44,26 @@ python main.py
 ```
 En Windows, si `python` no está en PATH, usa: `py main.py`
 
-Se abrirá la ventana principal con dos pestañas: **Productos** y **Ventas**.
+Al iniciar se muestra la **pantalla de login**. Usuario y contraseña por defecto (creados al primer arranque si no hay usuarios): **admin** / **admin**. Tras iniciar sesión se abre la ventana principal con tres pestañas: **Productos**, **Clientes** y **Ventas**.
 
 ## Estructura del proyecto
 
-- `main.py` — Punto de entrada.
+- `main.py` — Punto de entrada (muestra login y luego ventana principal).
 - `config.py` — Configuración de conexión MySQL.
 - `db/conexion.py` — Conexión a la base de datos.
-- `models/` — Modelos Producto, Venta, DetalleVenta.
-- `services/` — Lógica de negocio (inventario y ventas).
-- `ui/` — Ventanas Tkinter (principal, productos, ventas).
+- `models/` — Modelos Producto, Venta, DetalleVenta, Cliente, Usuario, Rol.
+- `services/` — Lógica de negocio (inventario, ventas, clientes, autenticación).
+- `ui/` — Ventanas Tkinter (login, principal, productos, clientes, ventas).
 - `utils/helpers.py` — Validaciones y formato.
-- `database/schema.sql` — Script SQL completo.
+- `database/schema.sql` — Script SQL completo (productos, ventas, clientes, usuarios, roles).
 
 ## Funcionalidades
 
-- **Productos:** listar, buscar, agregar, editar, eliminar.
+- **Login:** autenticación con usuario y contraseña (hash bcrypt). Roles: Administrador, Vendedor. Usuario por defecto: admin / admin.
+- **Productos:** listar, buscar, agregar, editar, eliminar (CRUD).
+- **Clientes:** listar, buscar, agregar, editar, eliminar (CRUD). En Ventas se puede elegir un cliente del catálogo o escribir nombre libre.
 - **Ventas:** agregar productos a una venta, registrar venta (descuenta stock), ver historial.
-- Validaciones: nombre no vacío, precios y cantidades no negativos, stock suficiente al vender.
+- Validaciones: nombre no vacío donde aplica, precios y cantidades no negativos, stock suficiente al vender.
 
 ## Posibles mejoras futuras
 
