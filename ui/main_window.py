@@ -39,8 +39,23 @@ class MainWindow:
         # Pestaña Ventas
         self.frame_ventas = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.frame_ventas, text="  Ventas  ")
-        self.ventas_view = VentasView(self.frame_ventas)
+        self.ventas_view = VentasView(self.frame_ventas, on_venta_registrada=self._refrescar_productos)
         self.ventas_view.pack(fill=tk.BOTH, expand=True)
+
+        # Al cambiar a la pestaña Productos, refrescar la lista para ver stock actualizado
+        self.notebook.bind("<<NotebookTabChanged>>", self._al_cambiar_pestana)
+
+    def _al_cambiar_pestana(self, event=None):
+        """Cuando el usuario cambia a la pestaña Productos, refrescar la lista."""
+        try:
+            if self.notebook.index(self.notebook.select()) == 0:
+                self.productos_view.refrescar_lista()
+        except (tk.TclError, AttributeError):
+            pass
+
+    def _refrescar_productos(self):
+        """Llamado después de registrar una venta para actualizar la lista de productos (stock)."""
+        self.productos_view.refrescar_lista()
 
     def run(self):
         """Inicia el bucle principal de la aplicación."""

@@ -22,8 +22,9 @@ LineaCarrito = tuple
 class VentasView(ttk.Frame):
     """Frame con formulario de nueva venta y listado de historial."""
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, on_venta_registrada=None, **kwargs):
         super().__init__(parent, **kwargs)
+        self.on_venta_registrada = on_venta_registrada  # callback para refrescar Productos
         self.lineas_carrito = []  # List[Tuple[id_producto, nombre, cantidad, Decimal]]
         self._construir_ui()
 
@@ -184,6 +185,8 @@ class VentasView(ttk.Frame):
             self._limpiar_carrito()
             self._refrescar_historial()
             self._cargar_combo_productos()
+            if self.on_venta_registrada:
+                self.on_venta_registrada()  # Actualizar lista de productos (stock) en la pestaña Productos
         else:
             messagebox.showerror("Error", mensaje)
 

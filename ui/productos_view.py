@@ -86,6 +86,10 @@ class ProductosView(ttk.Frame):
         self.id_seleccionado = None
         self._refrescar_lista()
 
+    def refrescar_lista(self):
+        """Refresca la lista desde la BD (público para llamar desde main_window o ventas)."""
+        self._refrescar_lista()
+
     def _refrescar_lista(self):
         for item in self.tree.get_children():
             self.tree.delete(item)

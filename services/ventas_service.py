@@ -60,7 +60,9 @@ class VentasService:
         conn = obtener_conexion()
         if not conn:
             return False, "No se pudo conectar a la base de datos."
+        autocommit_original = conn.autocommit
         try:
+            conn.autocommit = False  # Transacción explícita: todo o nada
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO ventas (total, cliente, observaciones) VALUES (%s, %s, %s)",
@@ -74,7 +76,10 @@ class VentasService:
                     "VALUES (%s, %s, %s, %s, %s)",
                     (id_venta, id_producto, cantidad, float(precio_unitario), subtotal),
                 )
-                cursor.execute("UPDATE productos SET stock = stock - %s WHERE id = %s", (cantidad, id_producto))
+                cursor.execute(
+                    "UPDATE productos SET stock = stock - %s WHERE id = %s",
+                    (cantidad, id_producto),
+                )
             conn.commit()
             cursor.close()
             return True, f"Venta registrada correctamente. Total: {total:.2f}"
@@ -83,6 +88,7 @@ class VentasService:
                 conn.rollback()
             return False, f"Error al registrar la venta: {e}"
         finally:
+            conn.autocommit = autocommit_original
             cerrar_conexion(conn)
 
     @staticmethod
