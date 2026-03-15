@@ -1,0 +1,29 @@
+# OmniStock - Archivos que no se suben a GitHub
+
+# Entorno virtual Python
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Configuración local (crea config_local.py con tu password y no lo subas)
+config_local.py
+.env
+.env.local
+
+# IDE / SO
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
